@@ -1,49 +1,72 @@
-const jwt = require('jsonwebtoken');
-const jwtPassword = 'secret';
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const jwtpassword = "123456";
 
+const app = express();
+app.use(express.json());
 
-/**
- * Generates a JWT for a given username and password.
- *
- * @param {string} username - The username to be included in the JWT payload.
- *                            Must be a valid email address.
- * @param {string} password - The password to be included in the JWT payload.
- *                            Should meet the defined length requirement (e.g., 6 characters).
- * @returns {string|null} A JWT string if the username and password are valid.
- *                        Returns null if the username is not a valid email or
- *                        the password does not meet the length requirement.
- */
-function signJwt(username, password) {
-    // Your code here
+const ALL_USER = [
+  {
+    username: "ankit@gmail.com",
+    password: "123",
+    name: "ankit raj",
+  },
+  {
+    username: "kundan@gmail.com",
+    password: "123",
+    name: "kundan raj",
+  },
+  {
+    username: "nidhi@gmail.com",
+    password: "123",
+    name: "nidhi raj",
+  },
+];
+
+function userExsis(username, password) {
+  // write loic is user Exists or not
+  for (let i = 0; i < ALL_USER.length; i++) {
+    if (ALL_USER[i].username == username && ALL_USER[i].password == password) {
+      return true;
+    }
+  }
+  return false;
 }
 
-/**
- * Verifies a JWT using a secret key.
- *
- * @param {string} token - The JWT string to verify.
- * @returns {boolean} Returns true if the token is valid and verified using the secret key.
- *                    Returns false if the token is invalid, expired, or not verified
- *                    using the secret key.
- */
-function verifyJwt(token) {
-    // Your code here
-}
+app.post("/signin", (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
 
-/**
- * Decodes a JWT to reveal its payload without verifying its authenticity.
- *
- * @param {string} token - The JWT string to decode.
- * @returns {object|false} The decoded payload of the JWT if the token is a valid JWT format.
- *                         Returns false if the token is not a valid JWT format.
- */
-function decodeJwt(token) {
-    // Your code here
-}
+  if (!userExsis(username, password)) {
+    return res.status(403).json({
+      msg: "User doesn't exists in my Db",
+    });
+  }
+  //else
 
+  var token = jwt.sign({ username: username }, jwtpassword);
+  return res.json({
+    token,
+  });
+});
 
-module.exports = {
-  signJwt,
-  verifyJwt,
-  decodeJwt,
-  jwtPassword,
-};
+app.get("/user", (req, res) => {
+  const token = req.headers.authorization;
+  try {
+    const decode = jwt.verify(token, jwtpassword);
+    const username = decode.username;
+    res.json({
+      //user: username,
+      user: ALL_USER.filter(function (value) {
+        if (value == username) {
+          return false;
+        }
+        return true;
+      }),
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+app.listen(3000);
